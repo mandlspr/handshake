@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Handshake — Account Health & Churn Risk Scorer</title>
+<style>
+  :root {
+    --paper: #0b0b0e;
+    --surface: #121217;
+    --surface-raised: #17171e;
+    --ink: #f4f4f7;
+    --muted: #9b9ca8;
+    --line: #2a2a33;
+    --line-soft: #202027;
+    --teal: #5ecfc0;
+    --teal-soft: rgba(94,207,192,.14);
+    --teal-hero: #8fe3d8;
+    --teal-hover: #6fdccc;
+    --amber: #d9a441;
+    --amber-soft: rgba(217,164,65,.14);
+    --green: #72c59c;
+    --red: #e77878;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
+  .shell {
+    max-width: 1280px;
+    margin: 0 auto;
+    background: var(--surface);
+    min-height: 100vh;
+    border-left: 1px solid var(--line);
+    border-right: 1px solid var(--line);
+  }
+
+  /* Header */
+  header.topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--line);
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .brand {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .brand-mark {
+    color: var(--teal-hero);
+    font-weight: 700;
+    font-size: 16px;
+    letter-spacing: 0.02em;
+  }
+  .brand-sub {
+    color: var(--muted);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .topbar-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .disclaimer {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--amber);
+    border: 1px solid var(--amber);
+    background: var(--amber-soft);
+    padding: 4px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+
+  .toggle-group {
+    display: flex;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .toggle-btn {
+    background: var(--surface-raised);
+    color: var(--muted);
+    border: none;
+    padding: 7px 14px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 600;
+  }
+  .toggle-btn + .toggle-btn { border-left: 1px solid var(--line); }
+  .toggle-btn.active {
+    background: var(--teal-soft);
+    color: var(--teal-hero);
+  }
+  .toggle-btn.mode-active-internal.active {
+    background: var(--amber-soft);
+    color: var(--amber);
+  }
+
+  .view-indicator {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-weight: 700;
+    border: 1px solid;
+  }
+  .view-indicator.internal {
+    color: var(--amber);
+    border-color: var(--amber);
+    background: var(--amber-soft);
+  }
+  .view-indicator.client {
+    color: var(--teal-hero);
+    border-color: var(--teal);
+    background: var(--teal-soft);
+  }
+
+  /* Layout */
+  .layout {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    min-height: calc(100vh - 61px);
+  }
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+  }
+
+  .account-list-panel {
+    border-right: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .panel-heading {
+    padding: 14px 20px 10px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    font-weight: 700;
+    border-bottom: 1px solid var(--line-soft);
+  }
+
+  .account-list {
+    overflow-y: auto;
+    max-height: calc(100vh - 110px);
+  }
+
+  .account-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--line-soft);
+    cursor: pointer;
+    gap: 10px;
+  }
+  .account-row:hover { background: var(--surface-raised); }
+  .account-row.selected {
+    background: var(--surface-raised);
+    box-shadow: inset 3px 0 0 var(--teal);
+  }
+
+  .account-row-main {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+  .account-name {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .account-meta {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .badge {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--line);
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .badge-plan { border-color: var(--line); color: var(--muted); }
+
+  .risk-display {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    min-width: 40px;
+  }
+  .risk-display.risk-high { color: var(--red); }
+  .risk-display.risk-medium { color: var(--amber); }
+  .risk-display.risk-low { color: var(--green); }
+  .risk-row-number { font-size: 18px; }
+
+  /* Detail panel */
+  .detail-panel {
+    padding: 24px 32px;
+    overflow-y: auto;
+  }
+  .empty-state {
+    color: var(--muted);
+    font-size: 13px;
+    padding: 40px 0;
+    text-align: center;
+  }
+
+  .detail-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .detail-title { font-size: 20px; font-weight: 700; }
+
+  .risk-hero {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+  .risk-hero-number {
+    font-size: 40px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+  .risk-hero-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+  }
+
+  section.block {
+    background: var(--surface-raised);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 16px 18px;
+    margin-bottom: 16px;
+  }
+  .block-title {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    font-weight: 700;
+    margin: 0 0 12px 0;
+  }
+
+  .context-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 14px;
+  }
+  .context-item { display: flex; flex-direction: column; gap: 3px; }
+  .context-item-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+  }
+  .context-item-value { font-size: 14px; font-weight: 600; }
+
+  /* Signal cards */
+  .signal-card {
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    background: var(--surface);
+  }
+  .signal-card:last-child { margin-bottom: 0; }
+  .signal-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+  .signal-flags { display: flex; gap: 6px; flex-wrap: wrap; }
+
+  .dim-badge {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 3px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--teal);
+    color: var(--teal-hero);
+    background: transparent;
+  }
+
+  .conf-badge {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 3px 8px;
+    border-radius: 4px;
+    border: 1px solid;
+    font-weight: 600;
+  }
+  .conf-badge.high { color: var(--green); border-color: var(--green); background: rgba(114,197,156,.12); }
+  .conf-badge.medium { color: var(--amber); border-color: var(--amber); background: var(--amber-soft); }
+  .conf-badge.low { color: var(--red); border-color: var(--red); background: rgba(231,120,120,.12); }
+
+  .flag-badge {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 3px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--amber);
+    color: var(--amber);
+    background: var(--amber-soft);
+    font-weight: 600;
+  }
+  .flag-badge.equity {
+    border-color: var(--teal);
+    color: var(--teal-hero);
+    background: var(--teal-soft);
+  }
+
+  .signal-text { color: var(--ink); font-size: 13px; }
+  .signal-date { color: var(--muted); font-size: 11px; margin-top: 6px; }
+
+  /* Escalation */
+  .csm-note-input {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    border-radius: 4px;
+    padding: 10px 12px;
+    font-family: inherit;
+    font-size: 13px;
+    resize: vertical;
+    min-height: 64px;
+  }
+  .csm-note-input:focus {
+    outline: none;
+    border-color: var(--teal);
+  }
+  .csm-note-input::placeholder { color: var(--muted); }
+
+  .escalate-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+
+  .btn-primary {
+    background: var(--teal);
+    color: #08201c;
+    border: none;
+    padding: 9px 18px;
+    border-radius: 4px;
+    font-weight: 700;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .btn-primary:hover { background: var(--teal-hover); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .escalate-status { font-size: 12px; }
+  .escalate-status.success { color: var(--green); }
+  .escalate-status.error { color: var(--red); }
+  .escalate-status.pending { color: var(--muted); }
+
+  /* QBR summary */
+  .qbr-grid {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .qbr-stat { display: flex; flex-direction: column; gap: 3px; }
+  .qbr-stat-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+  }
+  .qbr-stat-value { font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; }
+
+  .trend {
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .trend.up { color: var(--red); }
+  .trend.down { color: var(--green); }
+  .trend.flat { color: var(--muted); }
+
+  .status-generic {
+    font-size: 13px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 4px;
+    border: 1px solid;
+  }
+  .status-generic.ok { color: var(--green); border-color: var(--green); background: rgba(114,197,156,.1); }
+  .status-generic.watch { color: var(--amber); border-color: var(--amber); background: var(--amber-soft); }
+  .status-generic.risk { color: var(--red); border-color: var(--red); background: rgba(231,120,120,.1); }
+
+  .loading, .error-msg {
+    padding: 40px 24px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .error-msg { color: var(--red); }
+
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">Handshake</span>
+      <span class="brand-sub" data-t="brandSub">Account Health &amp; Churn Risk Scorer</span>
+    </div>
+    <div class="topbar-controls">
+      <span class="disclaimer" data-t="demoDisclaimer">Demo data only — fictional accounts</span>
+      <div class="toggle-group" role="group" aria-label="Language toggle">
+        <button class="toggle-btn" id="lang-de" onclick="setLang('de')">DE</button>
+        <button class="toggle-btn" id="lang-en" onclick="setLang('en')">EN</button>
+      </div>
+      <div class="toggle-group" role="group" aria-label="View mode toggle">
+        <button class="toggle-btn mode-active-internal" id="mode-internal" onclick="setMode('internal')" data-t="internalView">Internal</button>
+        <button class="toggle-btn" id="mode-client" onclick="setMode('client')" data-t="clientView">Client View</button>
+      </div>
+      <span class="view-indicator internal" id="view-indicator" data-t="internalActive">Internal View Active</span>
+    </div>
+  </header>
+
+  <div class="layout">
+    <div class="account-list-panel">
+      <div class="panel-heading" data-t="accountsHeading">Accounts (12)</div>
+      <div class="account-list" id="account-list">
+        <div class="loading" data-t="loadingAccounts">Loading accounts…</div>
+      </div>
+    </div>
+
+    <div class="detail-panel" id="detail-panel">
+      <div class="empty-state" data-t="selectAccount">Select an account to view details.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* -----------------------------------------------------------------------
+ * Supabase config (read-only anon key, RLS allows public SELECT on
+ * `accounts`). This is a client-side demo prototype — no build step.
+ * --------------------------------------------------------------------- */
+const SUPABASE_URL = "https://xbessfrachtfzgwmbgzk.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhiZXNzZnJhY2h0Znpnd21iZ3prIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY1MzY3MTcsImV4cCI6MjEwMjExMjcxN30.kfqMjRV4wzhr8mJGmYRUNicUlwTtqrYKMvaGTweRFvE";
+
+/* Escalation webhook belongs to the Startplatz shared training n8n
+ * instance used for this course project — not personal infrastructure. */
+const ESCALATION_WEBHOOK_URL = "https://ki-automatisierung.startplatz-ai-hub.de/webhook/escalate-signal";
+
+/* -----------------------------------------------------------------------
+ * i18n
+ * --------------------------------------------------------------------- */
+const translations = {
+  en: {
+    brandSub: "Account Health & Churn Risk Scorer",
+    demoDisclaimer: "Demo data only — fictional accounts",
+    internalView: "Internal",
+    clientView: "Client View",
+    internalActive: "Internal View Active",
+    clientActive: "Client View Active",
+    accountsHeading: "Accounts (12)",
+    loadingAccounts: "Loading accounts…",
+    loadError: "Could not load accounts from Supabase. Please check your connection and try again.",
+    selectAccount: "Select an account to view details.",
+    accountContext: "Account Context",
+    language: "Language",
+    plan: "Plan",
+    sector: "Sector",
+    region: "Region",
+    employees: "Employees",
+    riskScore: "Risk Score",
+    signals: "Governance Signals",
+    noSignals: "No governance signals recorded for this account yet.",
+    dimension: "Dimension",
+    confidence: "Confidence",
+    humanReview: "Human Review Flag",
+    equityWatch: "Equity Watch",
+    confHigh: "High",
+    confMedium: "Medium",
+    confLow: "Low",
+    csmNoteLabel: "CSM note",
+    csmNotePlaceholder: "Add context for this escalation…",
+    escalateBtn: "Escalate Signal",
+    escalating: "Escalating…",
+    escalateSuccess: "Signal escalated successfully.",
+    escalateError: "Failed to escalate signal. Please try again.",
+    escalateEmpty: "Add a note before escalating.",
+    qbrSummary: "QBR Summary",
+    trend: "Trend",
+    signalCount: "Signal Count",
+    statusOk: "Healthy",
+    statusWatch: "Watch",
+    statusRisk: "At Risk",
+    trendUp: "Rising",
+    trendDown: "Improving",
+    trendFlat: "Stable",
+  },
+  de: {
+    brandSub: "Account Health & Churn Risk Scorer",
+    demoDisclaimer: "Nur Demo-Daten — fiktive Accounts",
+    internalView: "Intern",
+    clientView: "Kundenansicht",
+    internalActive: "Interne Ansicht aktiv",
+    clientActive: "Kundenansicht aktiv",
+    accountsHeading: "Accounts (12)",
+    loadingAccounts: "Accounts werden geladen…",
+    loadError: "Accounts konnten nicht aus Supabase geladen werden. Bitte Verbindung prüfen und erneut versuchen.",
+    selectAccount: "Wählen Sie einen Account aus, um Details zu sehen.",
+    accountContext: "Account-Kontext",
+    language: "Sprache",
+    plan: "Plan",
+    sector: "Branche",
+    region: "Region",
+    employees: "Mitarbeitende",
+    riskScore: "Risiko-Score",
+    signals: "Governance-Signale",
+    noSignals: "Für diesen Account sind noch keine Governance-Signale erfasst.",
+    dimension: "Dimension",
+    confidence: "Konfidenz",
+    humanReview: "Human-Review-Flag",
+    equityWatch: "Equity Watch",
+    confHigh: "Hoch",
+    confMedium: "Mittel",
+    confLow: "Niedrig",
+    csmNoteLabel: "CSM-Notiz",
+    csmNotePlaceholder: "Kontext für diese Eskalation hinzufügen…",
+    escalateBtn: "Signal eskalieren",
+    escalating: "Eskaliere…",
+    escalateSuccess: "Signal erfolgreich eskaliert.",
+    escalateError: "Eskalation fehlgeschlagen. Bitte erneut versuchen.",
+    escalateEmpty: "Bitte vor der Eskalation eine Notiz hinzufügen.",
+    qbrSummary: "QBR-Zusammenfassung",
+    trend: "Trend",
+    signalCount: "Anzahl Signale",
+    statusOk: "Gesund",
+    statusWatch: "Beobachten",
+    statusRisk: "Gefährdet",
+    trendUp: "Steigend",
+    trendDown: "Verbessernd",
+    trendFlat: "Stabil",
+  }
+};
+
+let currentLang = "de";
+let currentMode = "internal"; // 'internal' | 'client'
+let accounts = [];
+let selectedAccountId = null;
+
+function t(key) {
+  return (translations[currentLang] && translations[currentLang][key]) || key;
+}
+
+/* -----------------------------------------------------------------------
+ * Optional per-account governance signals (Notion read/write not wired
+ * up in this pass — this is static demo data so the Signal Card UI has
+ * something to render; several accounts intentionally show the empty
+ * state).
+ * --------------------------------------------------------------------- */
+const demoSignals = {
+  "Moonjar Systems": [
+    { dimension: "Data Retention", confidence: "high", humanReview: false, equityWatch: false, text: "Automated retention policy flagged 3 datasets exceeding contractual window.", date: "2026-07-28" },
+    { dimension: "Access Control", confidence: "medium", humanReview: true, equityWatch: false, text: "Elevated permissions granted to a service account without documented approval.", date: "2026-08-02" },
+  ],
+  "Velvet Comet": [
+    { dimension: "Model Output Drift", confidence: "low", humanReview: true, equityWatch: true, text: "Classifier confidence dropped below threshold on two consecutive review cycles.", date: "2026-08-10" },
+  ],
+  "Cinderloop Labs": [],
+  "Puddleforge": [
+    { dimension: "Vendor Risk", confidence: "medium", humanReview: false, equityWatch: false, text: "Sub-processor disclosure pending renewal; flagged for QBR discussion.", date: "2026-07-15" },
+  ],
+  "Orbit Nettle": [],
+  "Tallow Metric": [
+    { dimension: "Bias Monitoring", confidence: "high", humanReview: false, equityWatch: true, text: "Quarterly fairness audit completed with no material findings.", date: "2026-08-05" },
+  ],
+  "Juniper Kite": [],
+  "Fable Current": [
+    { dimension: "Data Retention", confidence: "low", humanReview: true, equityWatch: false, text: "Legal hold conflict detected against standard deletion schedule.", date: "2026-08-12" },
+  ],
+  "Hearth Pixel": [],
+  "Saffron Relay": [
+    { dimension: "Access Control", confidence: "high", humanReview: false, equityWatch: false, text: "Access review completed on schedule, no anomalies.", date: "2026-07-30" },
+  ],
+  "Moss Meridian": [],
+  "Blue Thimble": [
+    { dimension: "Model Output Drift", confidence: "medium", humanReview: false, equityWatch: true, text: "Minor drift observed in one region; within acceptable bounds pending next review.", date: "2026-08-08" },
+  ],
+};
+
+/* -----------------------------------------------------------------------
+ * Data fetch
+ * --------------------------------------------------------------------- */
+async function fetchAccounts() {
+  const listEl = document.getElementById("account-list");
+  listEl.innerHTML = `<div class="loading">${t("loadingAccounts")}</div>`;
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/accounts?select=*&order=risk_score.desc`, {
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    accounts = await res.json();
+    renderAccountList();
+    if (accounts.length && selectedAccountId === null) {
+      selectAccount(accounts[0].id);
+    }
+  } catch (err) {
+    listEl.innerHTML = `<div class="error-msg">${t("loadError")}</div>`;
+    console.error("Failed to fetch accounts:", err);
+  }
+}
+
+/* -----------------------------------------------------------------------
+ * Risk helpers
+ * --------------------------------------------------------------------- */
+function riskTier(score) {
+  if (score >= 66) return "high";
+  if (score >= 33) return "medium";
+  return "low";
+}
+function riskStatusKey(score) {
+  if (score >= 66) return "statusRisk";
+  if (score >= 33) return "statusWatch";
+  return "statusOk";
+}
+function riskStatusClass(score) {
+  if (score >= 66) return "risk";
+  if (score >= 33) return "watch";
+  return "ok";
+}
+function confBadgeClass(conf) {
+  if (conf === "high") return "high";
+  if (conf === "medium") return "medium";
+  return "low";
+}
+function confLabelKey(conf) {
+  if (conf === "high") return "confHigh";
+  if (conf === "medium") return "confMedium";
+  return "confLow";
+}
+
+/* -----------------------------------------------------------------------
+ * Rendering — account list
+ * --------------------------------------------------------------------- */
+function renderAccountList() {
+  const listEl = document.getElementById("account-list");
+  document.querySelector(".panel-heading").textContent = `${t("accountsHeading").split("(")[0].trim()} (${accounts.length})`;
+
+  listEl.innerHTML = accounts.map(acc => {
+    const tier = riskTier(acc.risk_score);
+    const signals = demoSignals[acc.account_name] || [];
+    const hasReviewFlag = currentMode === "internal" && signals.some(s => s.humanReview);
+    return `
+      <div class="account-row ${acc.id === selectedAccountId ? "selected" : ""}" onclick="selectAccount(${acc.id})">
+        <div class="account-row-main">
+          <div class="account-name">${escapeHtml(acc.account_name)}</div>
+          <div class="account-meta">
+            <span class="badge badge-plan">${escapeHtml(acc.plan || "—")}</span>
+            ${hasReviewFlag ? `<span class="flag-badge" style="padding:1px 5px;font-size:9px;">${t("humanReview")}</span>` : ""}
+          </div>
+        </div>
+        <div class="risk-display risk-${tier}">
+          <span class="risk-row-number">${acc.risk_score ?? "—"}</span>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+/* -----------------------------------------------------------------------
+ * Rendering — detail panel
+ * --------------------------------------------------------------------- */
+function selectAccount(id) {
+  selectedAccountId = id;
+  renderAccountList();
+  renderDetailPanel();
+}
+
+function renderDetailPanel() {
+  const panel = document.getElementById("detail-panel");
+  const acc = accounts.find(a => a.id === selectedAccountId);
+  if (!acc) {
+    panel.innerHTML = `<div class="empty-state">${t("selectAccount")}</div>`;
+    return;
+  }
+
+  const tier = riskTier(acc.risk_score);
+  const signals = demoSignals[acc.account_name] || [];
+  const isInternal = currentMode === "internal";
+
+  const statusHtml = isInternal
+    ? `<div class="risk-hero">
+         <span class="risk-hero-number risk-${tier}">${acc.risk_score ?? "—"}</span>
+         <span class="risk-hero-label">${t("riskScore")}</span>
+       </div>`
+    : `<div class="risk-hero">
+         <span class="risk-hero-number risk-${tier}">${acc.risk_score ?? "—"}</span>
+         <span class="status-generic ${riskStatusClass(acc.risk_score)}">${t(riskStatusKey(acc.risk_score))}</span>
+       </div>`;
+
+  const contextHtml = `
+    <section class="block">
+      <p class="block-title">${t("accountContext")}</p>
+      <div class="context-grid">
+        <div class="context-item">
+          <span class="context-item-label">${t("language")}</span>
+          <span class="context-item-value">${escapeHtml(acc.language || "—")}</span>
+        </div>
+        <div class="context-item">
+          <span class="context-item-label">${t("plan")}</span>
+          <span class="context-item-value">${escapeHtml(acc.plan || "—")}</span>
+        </div>
+        <div class="context-item">
+          <span class="context-item-label">${t("sector")}</span>
+          <span class="context-item-value">${escapeHtml(acc.sector || "—")}</span>
+        </div>
+        <div class="context-item">
+          <span class="context-item-label">${t("region")}</span>
+          <span class="context-item-value">${escapeHtml(acc.region || "—")}</span>
+        </div>
+        <div class="context-item">
+          <span class="context-item-label">${t("employees")}</span>
+          <span class="context-item-value">${acc.employee_count ?? "—"}</span>
+        </div>
+      </div>
+    </section>
+  `;
+
+  let signalsHtml = "";
+  if (isInternal) {
+    signalsHtml = `
+      <section class="block">
+        <p class="block-title">${t("signals")}</p>
+        ${signals.length === 0
+          ? `<div class="empty-state" style="padding:16px 0;">${t("noSignals")}</div>`
+          : signals.map(s => `
+            <div class="signal-card">
+              <div class="signal-card-top">
+                <span class="dim-badge">${t("dimension")}: ${escapeHtml(s.dimension)}</span>
+                <div class="signal-flags">
+                  <span class="conf-badge ${confBadgeClass(s.confidence)}">${t("confidence")}: ${t(confLabelKey(s.confidence))}</span>
+                  ${s.humanReview ? `<span class="flag-badge">${t("humanReview")}</span>` : ""}
+                  ${s.equityWatch ? `<span class="flag-badge equity">${t("equityWatch")}</span>` : ""}
+                </div>
+              </div>
+              <div class="signal-text">${escapeHtml(s.text)}</div>
+              <div class="signal-date">${s.date}</div>
+            </div>
+          `).join("")}
+      </section>
+    `;
+  }
+
+  const qbrHtml = `
+    <section class="block">
+      <p class="block-title">${t("qbrSummary")}</p>
+      <div class="qbr-grid">
+        <div class="qbr-stat">
+          <span class="qbr-stat-label">${t("riskScore")}</span>
+          <span class="qbr-stat-value risk-${tier}">${acc.risk_score ?? "—"}</span>
+        </div>
+        <div class="qbr-stat">
+          <span class="qbr-stat-label">${t("trend")}</span>
+          <span class="trend ${trendClass(acc)}">${t(trendLabelKey(acc))}</span>
+        </div>
+        ${isInternal ? `
+        <div class="qbr-stat">
+          <span class="qbr-stat-label">${t("signalCount")}</span>
+          <span class="qbr-stat-value">${signals.length}</span>
+        </div>` : ""}
+      </div>
+    </section>
+  `;
+
+  const escalateHtml = `
+    <section class="block">
+      <p class="block-title">${t("csmNoteLabel")}</p>
+      <textarea class="csm-note-input" id="csm-note-input" placeholder="${t("csmNotePlaceholder")}"></textarea>
+      <div class="escalate-row">
+        <button class="btn-primary" id="escalate-btn" onclick="escalateSignal(${acc.id})">${t("escalateBtn")}</button>
+        <span class="escalate-status" id="escalate-status"></span>
+      </div>
+    </section>
+  `;
+
+  panel.innerHTML = `
+    <div class="detail-header">
+      <div class="detail-title">${escapeHtml(acc.account_name)}</div>
+      ${statusHtml}
+    </div>
+    ${contextHtml}
+    ${signalsHtml}
+    ${qbrHtml}
+    ${escalateHtml}
+  `;
+}
+
+function trendClass(acc) {
+  // Deterministic pseudo-trend derived from risk_score for demo purposes.
+  const mod = (acc.id + acc.risk_score) % 3;
+  if (mod === 0) return "up";
+  if (mod === 1) return "down";
+  return "flat";
+}
+function trendLabelKey(acc) {
+  const cls = trendClass(acc);
+  if (cls === "up") return "trendUp";
+  if (cls === "down") return "trendDown";
+  return "trendFlat";
+}
+
+/* -----------------------------------------------------------------------
+ * Escalation
+ * --------------------------------------------------------------------- */
+async function escalateSignal(accountId) {
+  const acc = accounts.find(a => a.id === accountId);
+  const input = document.getElementById("csm-note-input");
+  const btn = document.getElementById("escalate-btn");
+  const status = document.getElementById("escalate-status");
+  const note = input.value.trim();
+
+  if (!note) {
+    status.textContent = t("escalateEmpty");
+    status.className = "escalate-status error";
+    return;
+  }
+
+  btn.disabled = true;
+  status.textContent = t("escalating");
+  status.className = "escalate-status pending";
+
+  try {
+    const res = await fetch(ESCALATION_WEBHOOK_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ account_name: acc.account_name, note_csm: note }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    status.textContent = t("escalateSuccess");
+    status.className = "escalate-status success";
+    input.value = "";
+  } catch (err) {
+    status.textContent = t("escalateError");
+    status.className = "escalate-status error";
+    console.error("Escalation failed:", err);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+/* -----------------------------------------------------------------------
+ * View / language toggles
+ * --------------------------------------------------------------------- */
+function setLang(lang) {
+  currentLang = lang;
+  document.getElementById("lang-de").classList.toggle("active", lang === "de");
+  document.getElementById("lang-en").classList.toggle("active", lang === "en");
+  applyStaticTranslations();
+  renderAccountList();
+  renderDetailPanel();
+}
+
+function setMode(mode) {
+  currentMode = mode;
+  document.getElementById("mode-internal").classList.toggle("active", mode === "internal");
+  document.getElementById("mode-client").classList.toggle("active", mode === "client");
+  const indicator = document.getElementById("view-indicator");
+  indicator.className = `view-indicator ${mode}`;
+  indicator.textContent = mode === "internal" ? t("internalActive") : t("clientActive");
+  renderAccountList();
+  renderDetailPanel();
+}
+
+function applyStaticTranslations() {
+  document.querySelectorAll("[data-t]").forEach(el => {
+    const key = el.getAttribute("data-t");
+    el.textContent = t(key);
+  });
+  const indicator = document.getElementById("view-indicator");
+  indicator.textContent = currentMode === "internal" ? t("internalActive") : t("clientActive");
+}
+
+function escapeHtml(str) {
+  if (str === null || str === undefined) return "";
+  const div = document.createElement("div");
+  div.textContent = String(str);
+  return div.innerHTML;
+}
+
+/* -----------------------------------------------------------------------
+ * Init
+ * --------------------------------------------------------------------- */
+document.getElementById("lang-de").classList.add("active");
+document.getElementById("mode-internal").classList.add("active");
+applyStaticTranslations();
+fetchAccounts();
+</script>
+
+</body>
+</html>

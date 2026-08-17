@@ -1,0 +1,11 @@
+.DS_Store
+.claude/scheduled_tasks.lock
+
+# Personal project notes and working files not part of the app deliverable
+*.png
+*.csv
+*.json
+!.claude/launch.json
+Handshake_Final/
+*.md
+!README.md
