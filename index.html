@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Handshake — Account Health & Churn Risk Scorer</title>
+<title>Handshake</title>
 <style>
   :root {
     --paper: #0b0b0e;
@@ -65,13 +65,6 @@
     font-size: 16px;
     letter-spacing: 0.02em;
   }
-  .brand-sub {
-    color: var(--muted);
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-  }
-
   .topbar-controls {
     display: flex;
     align-items: center;
@@ -113,30 +106,6 @@
   .toggle-btn.active {
     background: var(--teal-soft);
     color: var(--teal-hero);
-  }
-  .toggle-btn.mode-active-internal.active {
-    background: var(--amber-soft);
-    color: var(--amber);
-  }
-
-  .view-indicator {
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    padding: 5px 10px;
-    border-radius: 4px;
-    font-weight: 700;
-    border: 1px solid;
-  }
-  .view-indicator.internal {
-    color: var(--amber);
-    border-color: var(--amber);
-    background: var(--amber-soft);
-  }
-  .view-indicator.client {
-    color: var(--teal-hero);
-    border-color: var(--teal);
-    background: var(--teal-soft);
   }
 
   /* Layout */
@@ -429,10 +398,8 @@
   .trend {
     font-size: 12px;
     font-weight: 600;
+    color: var(--muted);
   }
-  .trend.up { color: var(--red); }
-  .trend.down { color: var(--green); }
-  .trend.flat { color: var(--muted); }
 
   .status-generic {
     font-size: 13px;
@@ -464,19 +431,14 @@
   <header class="topbar">
     <div class="brand">
       <span class="brand-mark">Handshake</span>
-      <span class="brand-sub" data-t="brandSub">Account Health &amp; Churn Risk Scorer</span>
     </div>
     <div class="topbar-controls">
       <span class="disclaimer" data-t="demoDisclaimer">Demo data only — fictional accounts</span>
       <div class="toggle-group" role="group" aria-label="Language toggle">
         <button class="toggle-btn" id="lang-de" onclick="setLang('de')">DE</button>
         <button class="toggle-btn" id="lang-en" onclick="setLang('en')">EN</button>
+        <button class="toggle-btn" id="lang-fr" onclick="setLang('fr')">FR</button>
       </div>
-      <div class="toggle-group" role="group" aria-label="View mode toggle">
-        <button class="toggle-btn mode-active-internal" id="mode-internal" onclick="setMode('internal')" data-t="internalView">Internal</button>
-        <button class="toggle-btn" id="mode-client" onclick="setMode('client')" data-t="clientView">Client View</button>
-      </div>
-      <span class="view-indicator internal" id="view-indicator" data-t="internalActive">Internal View Active</span>
     </div>
   </header>
 
@@ -511,12 +473,7 @@ const ESCALATION_WEBHOOK_URL = "https://ki-automatisierung.startplatz-ai-hub.de/
  * --------------------------------------------------------------------- */
 const translations = {
   en: {
-    brandSub: "Account Health & Churn Risk Scorer",
     demoDisclaimer: "Demo data only — fictional accounts",
-    internalView: "Internal",
-    clientView: "Client View",
-    internalActive: "Internal View Active",
-    clientActive: "Client View Active",
     accountsHeading: "Accounts (12)",
     loadingAccounts: "Loading accounts…",
     loadError: "Could not load accounts from Supabase. Please check your connection and try again.",
@@ -546,21 +503,14 @@ const translations = {
     escalateEmpty: "Add a note before escalating.",
     qbrSummary: "QBR Summary",
     trend: "Trend",
+    trendNote: "Based on a single snapshot — no time series available.",
     signalCount: "Signal Count",
     statusOk: "Healthy",
     statusWatch: "Watch",
     statusRisk: "At Risk",
-    trendUp: "Rising",
-    trendDown: "Improving",
-    trendFlat: "Stable",
   },
   de: {
-    brandSub: "Account Health & Churn Risk Scorer",
     demoDisclaimer: "Nur Demo-Daten — fiktive Accounts",
-    internalView: "Intern",
-    clientView: "Kundenansicht",
-    internalActive: "Interne Ansicht aktiv",
-    clientActive: "Kundenansicht aktiv",
     accountsHeading: "Accounts (12)",
     loadingAccounts: "Accounts werden geladen…",
     loadError: "Accounts konnten nicht aus Supabase geladen werden. Bitte Verbindung prüfen und erneut versuchen.",
@@ -590,18 +540,52 @@ const translations = {
     escalateEmpty: "Bitte vor der Eskalation eine Notiz hinzufügen.",
     qbrSummary: "QBR-Zusammenfassung",
     trend: "Trend",
+    trendNote: "Basierend auf einem einzelnen Snapshot, kein Zeitverlauf verfügbar.",
     signalCount: "Anzahl Signale",
     statusOk: "Gesund",
     statusWatch: "Beobachten",
     statusRisk: "Gefährdet",
-    trendUp: "Steigend",
-    trendDown: "Verbessernd",
-    trendFlat: "Stabil",
+  },
+  fr: {
+    demoDisclaimer: "Données de démonstration uniquement — comptes fictifs",
+    accountsHeading: "Comptes (12)",
+    loadingAccounts: "Chargement des comptes…",
+    loadError: "Impossible de charger les comptes depuis Supabase. Veuillez vérifier votre connexion et réessayer.",
+    selectAccount: "Sélectionnez un compte pour voir les détails.",
+    accountContext: "Contexte du compte",
+    language: "Langue",
+    plan: "Offre",
+    sector: "Secteur",
+    region: "Région",
+    employees: "Employés",
+    riskScore: "Score de risque",
+    signals: "Signaux de gouvernance",
+    noSignals: "Aucun signal de gouvernance enregistré pour ce compte pour l'instant.",
+    dimension: "Dimension",
+    confidence: "Confiance",
+    humanReview: "Signal de contrôle humain",
+    equityWatch: "Veille équité",
+    confHigh: "Élevée",
+    confMedium: "Moyenne",
+    confLow: "Faible",
+    csmNoteLabel: "Note CSM",
+    csmNotePlaceholder: "Ajouter du contexte pour cette escalade…",
+    escalateBtn: "Escalader le signal",
+    escalating: "Escalade en cours…",
+    escalateSuccess: "Signal escaladé avec succès.",
+    escalateError: "Échec de l'escalade du signal. Veuillez réessayer.",
+    escalateEmpty: "Ajoutez une note avant d'escalader.",
+    qbrSummary: "Synthèse QBR",
+    trend: "Tendance",
+    trendNote: "Basé sur un instantané unique, aucune évolution temporelle disponible.",
+    signalCount: "Nombre de signaux",
+    statusOk: "Sain",
+    statusWatch: "À surveiller",
+    statusRisk: "À risque",
   }
 };
 
 let currentLang = "de";
-let currentMode = "internal"; // 'internal' | 'client'
 let accounts = [];
 let selectedAccountId = null;
 
@@ -709,7 +693,7 @@ function renderAccountList() {
   listEl.innerHTML = accounts.map(acc => {
     const tier = riskTier(acc.risk_score);
     const signals = demoSignals[acc.account_name] || [];
-    const hasReviewFlag = currentMode === "internal" && signals.some(s => s.humanReview);
+    const hasReviewFlag = signals.some(s => s.humanReview);
     return `
       <div class="account-row ${acc.id === selectedAccountId ? "selected" : ""}" onclick="selectAccount(${acc.id})">
         <div class="account-row-main">
@@ -746,14 +730,8 @@ function renderDetailPanel() {
 
   const tier = riskTier(acc.risk_score);
   const signals = demoSignals[acc.account_name] || [];
-  const isInternal = currentMode === "internal";
 
-  const statusHtml = isInternal
-    ? `<div class="risk-hero">
-         <span class="risk-hero-number risk-${tier}">${acc.risk_score ?? "—"}</span>
-         <span class="risk-hero-label">${t("riskScore")}</span>
-       </div>`
-    : `<div class="risk-hero">
+  const statusHtml = `<div class="risk-hero">
          <span class="risk-hero-number risk-${tier}">${acc.risk_score ?? "—"}</span>
          <span class="status-generic ${riskStatusClass(acc.risk_score)}">${t(riskStatusKey(acc.risk_score))}</span>
        </div>`;
@@ -786,30 +764,27 @@ function renderDetailPanel() {
     </section>
   `;
 
-  let signalsHtml = "";
-  if (isInternal) {
-    signalsHtml = `
-      <section class="block">
-        <p class="block-title">${t("signals")}</p>
-        ${signals.length === 0
-          ? `<div class="empty-state" style="padding:16px 0;">${t("noSignals")}</div>`
-          : signals.map(s => `
-            <div class="signal-card">
-              <div class="signal-card-top">
-                <span class="dim-badge">${t("dimension")}: ${escapeHtml(s.dimension)}</span>
-                <div class="signal-flags">
-                  <span class="conf-badge ${confBadgeClass(s.confidence)}">${t("confidence")}: ${t(confLabelKey(s.confidence))}</span>
-                  ${s.humanReview ? `<span class="flag-badge">${t("humanReview")}</span>` : ""}
-                  ${s.equityWatch ? `<span class="flag-badge equity">${t("equityWatch")}</span>` : ""}
-                </div>
+  const signalsHtml = `
+    <section class="block">
+      <p class="block-title">${t("signals")}</p>
+      ${signals.length === 0
+        ? `<div class="empty-state" style="padding:16px 0;">${t("noSignals")}</div>`
+        : signals.map(s => `
+          <div class="signal-card">
+            <div class="signal-card-top">
+              <span class="dim-badge">${t("dimension")}: ${escapeHtml(s.dimension)}</span>
+              <div class="signal-flags">
+                <span class="conf-badge ${confBadgeClass(s.confidence)}">${t("confidence")}: ${t(confLabelKey(s.confidence))}</span>
+                ${s.humanReview ? `<span class="flag-badge">${t("humanReview")}</span>` : ""}
+                ${s.equityWatch ? `<span class="flag-badge equity">${t("equityWatch")}</span>` : ""}
               </div>
-              <div class="signal-text">${escapeHtml(s.text)}</div>
-              <div class="signal-date">${s.date}</div>
             </div>
-          `).join("")}
-      </section>
-    `;
-  }
+            <div class="signal-text">${escapeHtml(s.text)}</div>
+            <div class="signal-date">${s.date}</div>
+          </div>
+        `).join("")}
+    </section>
+  `;
 
   const qbrHtml = `
     <section class="block">
@@ -821,13 +796,12 @@ function renderDetailPanel() {
         </div>
         <div class="qbr-stat">
           <span class="qbr-stat-label">${t("trend")}</span>
-          <span class="trend ${trendClass(acc)}">${t(trendLabelKey(acc))}</span>
+          <span class="trend">${t("trendNote")}</span>
         </div>
-        ${isInternal ? `
         <div class="qbr-stat">
           <span class="qbr-stat-label">${t("signalCount")}</span>
           <span class="qbr-stat-value">${signals.length}</span>
-        </div>` : ""}
+        </div>
       </div>
     </section>
   `;
@@ -853,20 +827,6 @@ function renderDetailPanel() {
     ${qbrHtml}
     ${escalateHtml}
   `;
-}
-
-function trendClass(acc) {
-  // Deterministic pseudo-trend derived from risk_score for demo purposes.
-  const mod = (acc.id + acc.risk_score) % 3;
-  if (mod === 0) return "up";
-  if (mod === 1) return "down";
-  return "flat";
-}
-function trendLabelKey(acc) {
-  const cls = trendClass(acc);
-  if (cls === "up") return "trendUp";
-  if (cls === "down") return "trendDown";
-  return "trendFlat";
 }
 
 /* -----------------------------------------------------------------------
@@ -915,18 +875,8 @@ function setLang(lang) {
   currentLang = lang;
   document.getElementById("lang-de").classList.toggle("active", lang === "de");
   document.getElementById("lang-en").classList.toggle("active", lang === "en");
+  document.getElementById("lang-fr").classList.toggle("active", lang === "fr");
   applyStaticTranslations();
-  renderAccountList();
-  renderDetailPanel();
-}
-
-function setMode(mode) {
-  currentMode = mode;
-  document.getElementById("mode-internal").classList.toggle("active", mode === "internal");
-  document.getElementById("mode-client").classList.toggle("active", mode === "client");
-  const indicator = document.getElementById("view-indicator");
-  indicator.className = `view-indicator ${mode}`;
-  indicator.textContent = mode === "internal" ? t("internalActive") : t("clientActive");
   renderAccountList();
   renderDetailPanel();
 }
@@ -936,8 +886,6 @@ function applyStaticTranslations() {
     const key = el.getAttribute("data-t");
     el.textContent = t(key);
   });
-  const indicator = document.getElementById("view-indicator");
-  indicator.textContent = currentMode === "internal" ? t("internalActive") : t("clientActive");
 }
 
 function escapeHtml(str) {
@@ -951,7 +899,6 @@ function escapeHtml(str) {
  * Init
  * --------------------------------------------------------------------- */
 document.getElementById("lang-de").classList.add("active");
-document.getElementById("mode-internal").classList.add("active");
 applyStaticTranslations();
 fetchAccounts();
 </script>
