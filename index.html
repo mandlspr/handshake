@@ -434,6 +434,7 @@
     </div>
     <div class="topbar-controls">
       <span class="disclaimer" data-t="demoDisclaimer">Demo data only — fictional accounts</span>
+      <span class="disclaimer" id="signals-as-of"></span>
       <div class="toggle-group" role="group" aria-label="Language toggle">
         <button class="toggle-btn" id="lang-de" onclick="setLang('de')">DE</button>
         <button class="toggle-btn" id="lang-en" onclick="setLang('en')">EN</button>
@@ -486,7 +487,7 @@ const translations = {
     employees: "Employees",
     riskScore: "Risk Score",
     signals: "Governance Signals",
-    noSignals: "No governance signals recorded for this account yet.",
+    noSignals: "No governance signal recorded for this account.",
     dimension: "Dimension",
     confidence: "Confidence",
     humanReview: "Human Review Flag",
@@ -494,6 +495,11 @@ const translations = {
     confHigh: "High",
     confMedium: "Medium",
     confLow: "Low",
+    signalStatus: "Status",
+    sigStatusNew: "New",
+    sigStatusPending: "Pending review",
+    sigStatusValidated: "Validated",
+    asOf: "As of",
     csmNoteLabel: "CSM note",
     csmNotePlaceholder: "Add context for this escalation…",
     escalateBtn: "Escalate Signal",
@@ -523,7 +529,7 @@ const translations = {
     employees: "Mitarbeitende",
     riskScore: "Risiko-Score",
     signals: "Governance-Signale",
-    noSignals: "Für diesen Account sind noch keine Governance-Signale erfasst.",
+    noSignals: "Kein Governance-Signal für dieses Konto erfasst.",
     dimension: "Dimension",
     confidence: "Konfidenz",
     humanReview: "Human-Review-Flag",
@@ -531,6 +537,11 @@ const translations = {
     confHigh: "Hoch",
     confMedium: "Mittel",
     confLow: "Niedrig",
+    signalStatus: "Status",
+    sigStatusNew: "Neu",
+    sigStatusPending: "Prüfung ausstehend",
+    sigStatusValidated: "Bestätigt",
+    asOf: "Stand",
     csmNoteLabel: "CSM-Notiz",
     csmNotePlaceholder: "Kontext für diese Eskalation hinzufügen…",
     escalateBtn: "Signal eskalieren",
@@ -560,7 +571,7 @@ const translations = {
     employees: "Employés",
     riskScore: "Score de risque",
     signals: "Signaux de gouvernance",
-    noSignals: "Aucun signal de gouvernance enregistré pour ce compte pour l'instant.",
+    noSignals: "Aucun signal de gouvernance enregistré pour ce compte.",
     dimension: "Dimension",
     confidence: "Confiance",
     humanReview: "Signal de contrôle humain",
@@ -568,6 +579,11 @@ const translations = {
     confHigh: "Élevée",
     confMedium: "Moyenne",
     confLow: "Faible",
+    signalStatus: "Statut",
+    sigStatusNew: "Nouveau",
+    sigStatusPending: "Révision en attente",
+    sigStatusValidated: "Validé",
+    asOf: "Au",
     csmNoteLabel: "Note CSM",
     csmNotePlaceholder: "Ajouter du contexte pour cette escalade…",
     escalateBtn: "Escalader le signal",
@@ -594,40 +610,61 @@ function t(key) {
 }
 
 /* -----------------------------------------------------------------------
- * Optional per-account governance signals (Notion read/write not wired
- * up in this pass — this is static demo data so the Signal Card UI has
- * something to render; several accounts intentionally show the empty
- * state).
+ * Governance signals — synced from the Notion "Governance Signals"
+ * database (read-only snapshot, last pulled 2026-08-18). Dimension
+ * values are the project's closed HLEG taxonomy as enforced by the
+ * Notion select field: Human-Oversight, Robustness, Privacy,
+ * Transparency, Fairness, Accountability. Reason text is copied
+ * verbatim from the Notion "Reason" field (English, per project
+ * convention — not translated). Accounts absent from Notion (e.g.
+ * Juniper Kite) have no entry here and render the empty state.
  * --------------------------------------------------------------------- */
 const demoSignals = {
+  "Blue Thimble": [
+    { dimension: "Privacy", confidence: "high", humanReview: false, equityWatch: false, status: "New", text: "Customer requests redaction, indicating privacy-related concern about data usage.", date: "2026-08-14" },
+  ],
+  "Cinderloop Labs": [
+    { dimension: "Privacy", confidence: "high", humanReview: false, equityWatch: false, status: "New", text: "Client expressed concerns about data usage, indicating a privacy-related signal.", date: "2026-08-14" },
+  ],
+  "Fable Current": [
+    { dimension: "Human-Oversight", confidence: "high", humanReview: false, equityWatch: false, status: "New", text: "The note indicates a legal hold conflict requiring human validation and escalation.", date: "2026-08-16" },
+  ],
+  "Hearth Pixel": [
+    { dimension: "Fairness", confidence: "high", humanReview: true, equityWatch: true, status: "New", text: "Client reports perceived differential prioritization without a clear explanation.", date: "2026-08-14" },
+  ],
   "Moonjar Systems": [
-    { dimension: "Privacy", confidence: "high", humanReview: false, equityWatch: false, text: "Automated retention policy flagged 3 datasets exceeding contractual retention window.", date: "2026-07-28" },
-    { dimension: "Accountability", confidence: "medium", humanReview: true, equityWatch: false, text: "Elevated system permissions granted to a service account without a documented approval trail.", date: "2026-08-02" },
+    { dimension: "Accountability", confidence: "low", humanReview: true, equityWatch: false, status: "Pending review", text: "Escalation for an access control review suggests potential accountability gaps about who validated prior access decisions.", date: "2026-08-16" },
+  ],
+  "Moss Meridian": [
+    { dimension: "Accountability", confidence: "high", humanReview: false, equityWatch: false, status: "New", text: "Ambiguity about who validated/approved the change indicates accountability concerns.", date: "2026-08-14" },
+  ],
+  "Orbit Nettle": [
+    { dimension: "Fairness", confidence: "high", humanReview: true, equityWatch: true, status: "New", text: "Client reports perceived differential treatment compared to similar accounts.", date: "2026-08-14" },
+  ],
+  "Puddleforge": [
+    { dimension: "Human-Oversight", confidence: "high", humanReview: false, equityWatch: false, status: "New", text: "Client refused the decision and demanded a human review.", date: "2026-08-14" },
+  ],
+  "Saffron Relay": [
+    { dimension: "Transparency", confidence: "low", humanReview: true, equityWatch: false, status: "Pending review", text: "Note is ambiguous about what the client meant, suggesting potential confusion about a product decision or configuration.", date: "2026-08-14" },
+  ],
+  "Tallow Metric": [
+    { dimension: "Transparency", confidence: "high", humanReview: false, equityWatch: false, status: "New", text: "Customer questions why the new account configuration is displayed differently than what was discussed, signaling a transparency concern.", date: "2026-08-14" },
   ],
   "Velvet Comet": [
-    { dimension: "Robustness", confidence: "low", humanReview: true, equityWatch: true, text: "Classifier confidence dropped below threshold on two consecutive review cycles, indicating potential model degradation.", date: "2026-08-10" },
-  ],
-  "Cinderloop Labs": [],
-  "Puddleforge": [
-    { dimension: "Accountability", confidence: "medium", humanReview: false, equityWatch: false, text: "Sub-processor disclosure pending renewal; vendor accountability documentation flagged for QBR discussion.", date: "2026-07-15" },
-  ],
-  "Orbit Nettle": [],
-  "Tallow Metric": [
-    { dimension: "Fairness", confidence: "high", humanReview: false, equityWatch: true, text: "Quarterly fairness audit completed across protected attributes with no material findings.", date: "2026-08-05" },
+    { dimension: "Fairness", confidence: "high", humanReview: false, equityWatch: false, status: "Validated", text: "CSM reports perceived inequity in prioritization linked to account size/segment", date: "2026-08-12" },
   ],
   "Juniper Kite": [],
-  "Fable Current": [
-    { dimension: "Privacy", confidence: "low", humanReview: true, equityWatch: false, text: "Legal hold conflict detected against standard data deletion schedule, pending privacy review.", date: "2026-08-12" },
-  ],
-  "Hearth Pixel": [],
-  "Saffron Relay": [
-    { dimension: "Human-Oversight", confidence: "high", humanReview: false, equityWatch: false, text: "Scheduled human oversight review of automated escalation decisions completed on time, no anomalies flagged.", date: "2026-07-30" },
-  ],
-  "Moss Meridian": [],
-  "Blue Thimble": [
-    { dimension: "Transparency", confidence: "medium", humanReview: false, equityWatch: true, text: "Explainability documentation for the automated risk-scoring model shared with the account team; minor coverage gaps flagged for next review cycle.", date: "2026-08-08" },
-  ],
 };
+
+function latestSignalDate() {
+  const dates = Object.values(demoSignals).flat().map(s => s.date);
+  return dates.length ? dates.sort().at(-1) : null;
+}
+function signalStatusKey(status) {
+  if (status === "Pending review") return "sigStatusPending";
+  if (status === "Validated") return "sigStatusValidated";
+  return "sigStatusNew";
+}
 
 /* -----------------------------------------------------------------------
  * Data fetch
@@ -775,6 +812,7 @@ function renderDetailPanel() {
               <span class="dim-badge">${t("dimension")}: ${escapeHtml(s.dimension)}</span>
               <div class="signal-flags">
                 <span class="conf-badge ${confBadgeClass(s.confidence)}">${t("confidence")}: ${t(confLabelKey(s.confidence))}</span>
+                <span class="badge">${t("signalStatus")}: ${t(signalStatusKey(s.status))}</span>
                 ${s.humanReview ? `<span class="flag-badge">${t("humanReview")}</span>` : ""}
                 ${s.equityWatch ? `<span class="flag-badge equity">${t("equityWatch")}</span>` : ""}
               </div>
@@ -886,6 +924,11 @@ function applyStaticTranslations() {
     const key = el.getAttribute("data-t");
     el.textContent = t(key);
   });
+  const asOfEl = document.getElementById("signals-as-of");
+  const latest = latestSignalDate();
+  if (asOfEl && latest) {
+    asOfEl.textContent = `${t("asOf")}: ${latest}`;
+  }
 }
 
 function escapeHtml(str) {
