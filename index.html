@@ -8,7 +8,9 @@
   :root {
     --paper: #0b0b0e;
     --surface: #121217;
+    --surface-sunken: #0d0d11;
     --surface-raised: #17171e;
+    --surface-raised-2: #1e1e27;
     --ink: #f4f4f7;
     --muted: #9b9ca8;
     --line: #2a2a33;
@@ -24,6 +26,11 @@
   }
 
   * { box-sizing: border-box; }
+
+  :focus-visible {
+    outline: 2px solid var(--teal);
+    outline-offset: 2px;
+  }
 
   body {
     margin: 0;
@@ -48,7 +55,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 16px 24px;
+    padding: 18px 24px;
     border-bottom: 1px solid var(--line);
     gap: 16px;
     flex-wrap: wrap;
@@ -61,31 +68,36 @@
   }
   .brand-mark {
     color: var(--teal-hero);
-    font-weight: 700;
-    font-size: 16px;
-    letter-spacing: 0.02em;
+    font-weight: 800;
+    font-size: 20px;
+    letter-spacing: 0.01em;
   }
   .topbar-controls {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     flex-wrap: wrap;
   }
 
   .disclaimer {
+    display: inline-flex;
+    align-items: center;
+    height: 28px;
     font-size: 10px;
     text-transform: uppercase;
     letter-spacing: 0.06em;
     color: var(--amber);
     border: 1px solid var(--amber);
     background: var(--amber-soft);
-    padding: 4px 8px;
+    padding: 0 10px;
     border-radius: 4px;
     white-space: nowrap;
   }
 
   .toggle-group {
     display: flex;
+    align-items: stretch;
+    height: 28px;
     border: 1px solid var(--line);
     border-radius: 6px;
     overflow: hidden;
@@ -94,7 +106,7 @@
     background: var(--surface-raised);
     color: var(--muted);
     border: none;
-    padding: 7px 14px;
+    padding: 0 14px;
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.06em;
@@ -119,6 +131,7 @@
   }
 
   .account-list-panel {
+    background: var(--surface-sunken);
     border-right: 1px solid var(--line);
     display: flex;
     flex-direction: column;
@@ -226,8 +239,8 @@
     gap: 8px;
   }
   .risk-hero-number {
-    font-size: 40px;
-    font-weight: 800;
+    font-size: 30px;
+    font-weight: 700;
     font-variant-numeric: tabular-nums;
     line-height: 1;
   }
@@ -274,7 +287,7 @@
     border-radius: 6px;
     padding: 12px 14px;
     margin-bottom: 10px;
-    background: var(--surface);
+    background: var(--surface-raised-2);
   }
   .signal-card:last-child { margin-bottom: 0; }
   .signal-card-top {
@@ -514,6 +527,17 @@ const translations = {
     statusOk: "Healthy",
     statusWatch: "Watch",
     statusRisk: "At Risk",
+    reason_blueThimble: "Customer requests redaction, indicating privacy-related concern about data usage.",
+    reason_cinderloopLabs: "Client expressed concerns about data usage, indicating a privacy-related signal.",
+    reason_fableCurrent: "The note indicates a legal hold conflict requiring human validation and escalation.",
+    reason_hearthPixel: "Client reports perceived differential prioritization without a clear explanation.",
+    reason_moonjarSystems: "Escalation for an access control review suggests potential accountability gaps about who validated prior access decisions.",
+    reason_mossMeridian: "Ambiguity about who validated/approved the change indicates accountability concerns.",
+    reason_orbitNettle: "Client reports perceived differential treatment compared to similar accounts.",
+    reason_puddleforge: "Client refused the decision and demanded a human review.",
+    reason_saffronRelay: "Note is ambiguous about what the client meant, suggesting potential confusion about a product decision or configuration.",
+    reason_tallowMetric: "Customer questions why the new account configuration is displayed differently than what was discussed, signaling a transparency concern.",
+    reason_velvetComet: "CSM reports perceived inequity in prioritization linked to account size/segment.",
   },
   de: {
     demoDisclaimer: "Nur Demo-Daten — fiktive Accounts",
@@ -556,6 +580,17 @@ const translations = {
     statusOk: "Gesund",
     statusWatch: "Beobachten",
     statusRisk: "Gefährdet",
+    reason_blueThimble: "Kunde fordert die Löschung/Anonymisierung von Daten, was auf ein datenschutzbezogenes Anliegen zur Datennutzung hindeutet.",
+    reason_cinderloopLabs: "Kunde äußerte Bedenken hinsichtlich der Datennutzung, was auf ein datenschutzbezogenes Signal hindeutet.",
+    reason_fableCurrent: "Die Notiz weist auf einen Konflikt mit einer rechtlichen Aufbewahrungspflicht (Legal Hold) hin, der eine menschliche Prüfung und Eskalation erfordert.",
+    reason_hearthPixel: "Kunde berichtet über eine wahrgenommene unterschiedliche Priorisierung ohne klare Erklärung.",
+    reason_moonjarSystems: "Die Eskalation zur Überprüfung der Zugriffskontrolle deutet auf mögliche Verantwortlichkeitslücken hin, wer frühere Zugriffsentscheidungen validiert hat.",
+    reason_mossMeridian: "Unklarheit darüber, wer die Änderung validiert/genehmigt hat, deutet auf Bedenken hinsichtlich der Verantwortlichkeit hin.",
+    reason_orbitNettle: "Kunde berichtet über eine wahrgenommene ungleiche Behandlung im Vergleich zu ähnlichen Accounts.",
+    reason_puddleforge: "Kunde lehnte die Entscheidung ab und forderte eine menschliche Überprüfung.",
+    reason_saffronRelay: "Die Notiz ist unklar hinsichtlich dessen, was der Kunde meinte, was auf mögliche Verwirrung bezüglich einer Produktentscheidung oder Konfiguration hindeutet.",
+    reason_tallowMetric: "Kunde hinterfragt, warum die neue Account-Konfiguration anders angezeigt wird als besprochen, was auf ein Transparenzanliegen hindeutet.",
+    reason_velvetComet: "CSM berichtet über eine wahrgenommene Ungleichheit bei der Priorisierung im Zusammenhang mit Accountgröße/-segment.",
   },
   fr: {
     demoDisclaimer: "Données de démonstration uniquement — comptes fictifs",
@@ -598,6 +633,17 @@ const translations = {
     statusOk: "Sain",
     statusWatch: "À surveiller",
     statusRisk: "À risque",
+    reason_blueThimble: "Le client demande une suppression/anonymisation des données, ce qui indique une préoccupation liée à la confidentialité concernant l'utilisation des données.",
+    reason_cinderloopLabs: "Le client a exprimé des préoccupations concernant l'utilisation des données, ce qui indique un signal lié à la confidentialité.",
+    reason_fableCurrent: "La note indique un conflit avec une conservation légale (legal hold) nécessitant une validation humaine et une escalade.",
+    reason_hearthPixel: "Le client signale une priorisation différenciée perçue, sans explication claire.",
+    reason_moonjarSystems: "L'escalade pour une revue du contrôle d'accès suggère de possibles lacunes de responsabilité quant à qui a validé les décisions d'accès précédentes.",
+    reason_mossMeridian: "L'ambiguïté quant à qui a validé/approuvé le changement indique des préoccupations en matière de responsabilité.",
+    reason_orbitNettle: "Le client signale un traitement différencié perçu par rapport à des comptes similaires.",
+    reason_puddleforge: "Le client a refusé la décision et a exigé une révision humaine.",
+    reason_saffronRelay: "La note est ambiguë quant à ce que le client voulait dire, suggérant une possible confusion concernant une décision produit ou une configuration.",
+    reason_tallowMetric: "Le client s'interroge sur le fait que la nouvelle configuration du compte s'affiche différemment de ce qui avait été discuté, signalant une préoccupation de transparence.",
+    reason_velvetComet: "Le CSM signale une iniquité perçue dans la priorisation, liée à la taille/au segment du compte.",
   }
 };
 
@@ -621,37 +667,37 @@ function t(key) {
  * --------------------------------------------------------------------- */
 const demoSignals = {
   "Blue Thimble": [
-    { dimension: "Privacy", confidence: "high", humanReview: false, equityWatch: false, status: "New", text: "Customer requests redaction, indicating privacy-related concern about data usage.", date: "2026-08-14" },
+    { dimension: "Privacy", confidence: "high", humanReview: false, equityWatch: false, status: "New", reasonKey: "reason_blueThimble", date: "2026-08-14" },
   ],
   "Cinderloop Labs": [
-    { dimension: "Privacy", confidence: "high", humanReview: false, equityWatch: false, status: "New", text: "Client expressed concerns about data usage, indicating a privacy-related signal.", date: "2026-08-14" },
+    { dimension: "Privacy", confidence: "high", humanReview: false, equityWatch: false, status: "New", reasonKey: "reason_cinderloopLabs", date: "2026-08-14" },
   ],
   "Fable Current": [
-    { dimension: "Human-Oversight", confidence: "high", humanReview: false, equityWatch: false, status: "New", text: "The note indicates a legal hold conflict requiring human validation and escalation.", date: "2026-08-16" },
+    { dimension: "Human-Oversight", confidence: "high", humanReview: false, equityWatch: false, status: "New", reasonKey: "reason_fableCurrent", date: "2026-08-16" },
   ],
   "Hearth Pixel": [
-    { dimension: "Fairness", confidence: "high", humanReview: true, equityWatch: true, status: "New", text: "Client reports perceived differential prioritization without a clear explanation.", date: "2026-08-14" },
+    { dimension: "Fairness", confidence: "high", humanReview: true, equityWatch: true, status: "New", reasonKey: "reason_hearthPixel", date: "2026-08-14" },
   ],
   "Moonjar Systems": [
-    { dimension: "Accountability", confidence: "low", humanReview: true, equityWatch: false, status: "Pending review", text: "Escalation for an access control review suggests potential accountability gaps about who validated prior access decisions.", date: "2026-08-16" },
+    { dimension: "Accountability", confidence: "low", humanReview: true, equityWatch: false, status: "Pending review", reasonKey: "reason_moonjarSystems", date: "2026-08-16" },
   ],
   "Moss Meridian": [
-    { dimension: "Accountability", confidence: "high", humanReview: false, equityWatch: false, status: "New", text: "Ambiguity about who validated/approved the change indicates accountability concerns.", date: "2026-08-14" },
+    { dimension: "Accountability", confidence: "high", humanReview: false, equityWatch: false, status: "New", reasonKey: "reason_mossMeridian", date: "2026-08-14" },
   ],
   "Orbit Nettle": [
-    { dimension: "Fairness", confidence: "high", humanReview: true, equityWatch: true, status: "New", text: "Client reports perceived differential treatment compared to similar accounts.", date: "2026-08-14" },
+    { dimension: "Fairness", confidence: "high", humanReview: true, equityWatch: true, status: "New", reasonKey: "reason_orbitNettle", date: "2026-08-14" },
   ],
   "Puddleforge": [
-    { dimension: "Human-Oversight", confidence: "high", humanReview: false, equityWatch: false, status: "New", text: "Client refused the decision and demanded a human review.", date: "2026-08-14" },
+    { dimension: "Human-Oversight", confidence: "high", humanReview: false, equityWatch: false, status: "New", reasonKey: "reason_puddleforge", date: "2026-08-14" },
   ],
   "Saffron Relay": [
-    { dimension: "Transparency", confidence: "low", humanReview: true, equityWatch: false, status: "Pending review", text: "Note is ambiguous about what the client meant, suggesting potential confusion about a product decision or configuration.", date: "2026-08-14" },
+    { dimension: "Transparency", confidence: "low", humanReview: true, equityWatch: false, status: "Pending review", reasonKey: "reason_saffronRelay", date: "2026-08-14" },
   ],
   "Tallow Metric": [
-    { dimension: "Transparency", confidence: "high", humanReview: false, equityWatch: false, status: "New", text: "Customer questions why the new account configuration is displayed differently than what was discussed, signaling a transparency concern.", date: "2026-08-14" },
+    { dimension: "Transparency", confidence: "high", humanReview: false, equityWatch: false, status: "New", reasonKey: "reason_tallowMetric", date: "2026-08-14" },
   ],
   "Velvet Comet": [
-    { dimension: "Fairness", confidence: "high", humanReview: false, equityWatch: false, status: "Validated", text: "CSM reports perceived inequity in prioritization linked to account size/segment", date: "2026-08-12" },
+    { dimension: "Fairness", confidence: "high", humanReview: false, equityWatch: false, status: "Validated", reasonKey: "reason_velvetComet", date: "2026-08-12" },
   ],
   "Juniper Kite": [],
 };
@@ -817,7 +863,7 @@ function renderDetailPanel() {
                 ${s.equityWatch ? `<span class="flag-badge equity">${t("equityWatch")}</span>` : ""}
               </div>
             </div>
-            <div class="signal-text">${escapeHtml(s.text)}</div>
+            <div class="signal-text">${escapeHtml(t(s.reasonKey))}</div>
             <div class="signal-date">${s.date}</div>
           </div>
         `).join("")}
